@@ -25,6 +25,7 @@
 #include <QKeySequence>
 #include <QAction>
 #include <QMainWindow>
+#include <QRegularExpression>
 #include <QDesktopServices>
 
 #include <functional>
@@ -33,6 +34,7 @@
 
 const QFont DEFAULT_FONT = QFont("Fira Mono", 10);
 const QString COLOR_SCHEME = "SolarizedLight";
+const QRegularExpression FONT_CHANGE_REGEX("\\033\\]50;Font=([\\w\\s]+),?(\\d*)\\007");
 
 void add_shortcut(QTermWidget *console,
                   QKeySequence const & key,
@@ -71,23 +73,18 @@ int main(int argc, char *argv[])
 
     QObject::connect(console, &QTermWidget::titleChanged, [=](){});
     QObject::connect(console, &QTermWidget::receivedData, [=](QString const & text) {
-        // quick hack to support font change like konsole
-        if (text.startsWith("\033]50;Font=") && text.endsWith("\007")) {
-            QString font_str = text.mid(10, text.size() - 10 - 1);
-            auto font_str_parts = font_str.split(",");
+        auto match = FONT_CHANGE_REGEX.match(text);
+        if (match.hasMatch()) {
             bool ok = true;
-
             QFont new_font = DEFAULT_FONT;
-            if (font_str_parts.size() >= 1)
-                new_font.setFamily(font_str_parts.at(0));
-            if (font_str_parts.size() >= 2)
-                new_font.setPointSize(font_str_parts.at(1).toInt(&ok));
-
+            new_font.setFamily(match.captured(1));
+            if (match.captured(2).size() > 0)
+                new_font.setPointSize(match.captured(2).toInt(&ok));
             if (ok) {
                 qDebug() << "Setting font to " << new_font;
                 console->setTerminalFont(new_font);
             } else {
-                qDebug() << "Cannot parse font: " << font_str;
+                qDebug() << "Cannot parse font: " << match.captured(0);
             }
         }
     });
