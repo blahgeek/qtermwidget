@@ -69,6 +69,12 @@ using namespace Konsole;
 #define loc(X,Y) ((Y)*_columns+(X))
 #endif
 
+#if __APPLE__
+#define FORCE_FIXED_FONT 1
+#else
+#define FORCE_FIXED_FONT 0
+#endif
+
 #define yMouseScroll 1
 
 #define REPCHAR   "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
@@ -224,6 +230,7 @@ void TerminalDisplay::fontChange(const QFont&)
 
   _fixedFont = true;
 
+#if !(FORCE_FIXED_FONT)
   int fw = fm.width(QLatin1Char(REPCHAR[0]));
   for(unsigned int i=1; i< qstrlen(REPCHAR); i++)
   {
@@ -233,6 +240,7 @@ void TerminalDisplay::fontChange(const QFont&)
       break;
     }
   }
+#endif
 
   if (_fontWidth < 1)
     _fontWidth=1;
@@ -1212,10 +1220,12 @@ void TerminalDisplay::updateImage()
         std::wstring unistr(disstrU, p);
 
         bool saveFixedFont = _fixedFont;
+#if !(FORCE_FIXED_FONT)
         if (lineDraw)
            _fixedFont = false;
         if (doubleWidth)
            _fixedFont = false;
+#endif
 
         updateLine = true;
 
@@ -1660,8 +1670,10 @@ void TerminalDisplay::drawContents(QPainter &paint, const QRect &rect)
         len++; // Adjust for trailing part of multi-column character
 
             bool save__fixedFont = _fixedFont;
+#if !(FORCE_FIXED_FONT)
          if (lineDraw)
             _fixedFont = false;
+#endif
          unistr.resize(p);
 
          // Create a text scaling matrix for double width and double height lines.
