@@ -876,7 +876,7 @@ void TerminalDisplay::drawCharacters(QPainter& painter,
             if (useUnderline) draw_text_flags |= (1 << 1);
             if (useItalic) draw_text_flags |= (1 << 2);
             if (useStrikeOut) draw_text_flags |= (1 << 3);
-            if (useOverline) draw_text_flags |= (1 <= 4);
+            if (useOverline) draw_text_flags |= (1 << 4);
 
             QPair<uint32_t, QString> static_text_key(draw_text_flags, draw_text_str);
 
