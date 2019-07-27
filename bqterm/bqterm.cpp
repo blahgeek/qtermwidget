@@ -13,6 +13,8 @@
 #include <QCoreApplication>
 #include <QStyle>
 #include <QProxyStyle>
+#include <QUdpSocket>
+#include <QNetworkDatagram>
 
 #include <atomic>
 #include <functional>
@@ -28,8 +30,9 @@ const QFont DEFAULT_FONT = QFont("Fira Mono", 14);
 #else
 const QFont DEFAULT_FONT = QFont("Fira Mono", 10);
 #endif
-const QString COLOR_SCHEME = "SolarizedLight";
-const QRegularExpression FONT_CHANGE_REGEX("\\033\\]50;Font=([\\w\\s]+),?(\\d*)\\007");
+
+const QRegularExpression FONT_CHANGE_REGEX("^Font=([\\w\\s]+),?(\\d*)");
+const int GLOBAL_CONTROL_PORT = 9557;
 
 class BQStyle: public QProxyStyle {
 public:
@@ -49,6 +52,21 @@ void add_shortcut(QWidget *parent,
     parent->addAction(action);
 }
 
+// return bind port, or -1
+int add_udp_server(QObject *parent, int port,
+                   std::function<void(QString const & data)> cb) {
+    QUdpSocket *sock = new QUdpSocket(parent);
+    bool success = sock->bind(QHostAddress::LocalHost, port);
+    if (!success)
+        return -1;
+    QObject::connect(sock, &QUdpSocket::readyRead, [=]() {
+        auto data = sock->receiveDatagram();
+        if (!data.isValid())
+            return;
+        cb(QString(data.data()));
+    });
+    return sock->localPort();
+}
 
 static std::atomic<int> _console_cnt;
 
@@ -57,12 +75,11 @@ void new_console(QApplication *app) {
     _console_cnt += 1;
 
     console->setTerminalSizeHint(false);
-    console->setColorScheme(COLOR_SCHEME);
+    console->setColorScheme("SolarizedLight");
     console->setKeyBindings("default");
     console->setMotionAfterPasting(2);  // scroll to end
     console->setTerminalFont(DEFAULT_FONT);
     console->setBidiEnabled(false);
-    console->startShellProgram();
 
 #ifdef __APPLE__
     macos_hide_titlebar(console->winId());
@@ -88,16 +105,6 @@ void new_console(QApplication *app) {
     add_shortcut(console, QKeySequence("Meta+n"),
                  [=](){ new_console(app); });
 
-    QObject::connect(console, &QTermWidget::titleChanged, [=](){});
-    QObject::connect(console, &QTermWidget::receivedData, [=](QString const & text) {
-        auto match = FONT_CHANGE_REGEX.match(text);
-        if (match.hasMatch()) {
-            QFont new_font = DEFAULT_FONT;
-            new_font.setFamily(match.captured(1));
-            qDebug() << "Setting font to " << new_font;
-            console->setTerminalFont(new_font);
-        }
-    });
     QObject::connect(console, &QTermWidget::urlActivated, [](const QUrl& url, bool) {
         if (QApplication::keyboardModifiers() & (Qt::ControlModifier | Qt::MetaModifier))
             QDesktopServices::openUrl(url);
@@ -109,23 +116,44 @@ void new_console(QApplication *app) {
             app->quit();
     });
 
+    int control_port = add_udp_server(console, 0, [=](QString const & data) {
+        auto match = FONT_CHANGE_REGEX.match(data);
+        if (match.hasMatch()) {
+            QFont new_font = DEFAULT_FONT;
+            new_font.setFamily(match.captured(1));
+            qDebug() << "Setting font to " << new_font;
+            console->setTerminalFont(new_font);
+        }
+    });
+    console->setEnvironment(QStringList({
+        QString("BQTERM_LOCAL_CONTROL_PORT=%1").arg(control_port),
+        "TERM=xterm-256color",
+        "LANG=en_US.UTF-8",
+    }));
+
+    console->startShellProgram();
     console->show();
 }
 
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_MacDontSwapCtrlAndMeta, true);
-    QApplication app(argc, argv);
-    setenv("TERM", "xterm-256color", 1);
-    setenv("LANG", "en_US.UTF-8", 1);
+    QApplication* app = new QApplication(argc, argv);
 
 #ifdef __APPLE__
     BQStyle *style = new BQStyle;
-    style->setBaseStyle(app.style());
-    app.setStyle(style);
+    style->setBaseStyle(app->style());
+    app->setStyle(style);
 #endif
 
-    new_console(&app);
+    int global_control_port_binded =
+        add_udp_server(app, GLOBAL_CONTROL_PORT, [=](QString const & data){
+            if (data.startsWith("NewConsole"))
+                new_console(app);
+        });
+    if (global_control_port_binded != GLOBAL_CONTROL_PORT)
+        qDebug() << "Unable to bind" << GLOBAL_CONTROL_PORT;
+    new_console(app);
 
-    return app.exec();
+    return app->exec();
 }

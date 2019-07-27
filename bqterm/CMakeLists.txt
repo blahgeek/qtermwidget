@@ -1,6 +1,7 @@
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+find_package(Qt5Network "${QT_MINIMUM_VERSION}" REQUIRED)
 
 if (APPLE)
     add_executable(bqterm MACOSX_BUNDLE
@@ -11,7 +12,7 @@ else ()
     add_executable(bqterm ./bqterm.cpp)
 endif ()
 
-target_link_libraries(bqterm ${QTERMWIDGET_LIBRARY_NAME})
+target_link_libraries(bqterm ${QTERMWIDGET_LIBRARY_NAME} Qt5::Network)
 
 # install(TARGETS bqterm
 #     RUNTIME DESTINATION bin)
