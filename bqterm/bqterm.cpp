@@ -67,18 +67,8 @@ void new_console(QApplication *app) {
 #if __APPLE__
     macos_hide_titlebar(console->winId());
     console->setScrollBarPosition(QTermWidget::ScrollBarPosition::ScrollBarRight);
+#endif
 
-    add_shortcut(console, QKeySequence("Meta+C"),
-                 [=](){ console->copyClipboard(); });
-    add_shortcut(console, QKeySequence("Meta+V"),
-                 [=](){ console->pasteClipboard(); });
-    add_shortcut(console, QKeySequence("Meta+F"),
-                 [=](){ console->toggleShowSearchBar(); });
-    add_shortcut(console, QKeySequence(Qt::META, Qt::Key_Minus),
-                 [=](){ console->zoomOut(); });
-    add_shortcut(console, QKeySequence(Qt::META, Qt::Key_Plus),
-                 [=](){ console->zoomIn(); });
-#else
     add_shortcut(console, QKeySequence("Ctrl+Shift+C"),
                  [=](){ console->copyClipboard(); });
     add_shortcut(console, QKeySequence("Meta+C"),
@@ -91,11 +81,10 @@ void new_console(QApplication *app) {
                  [=](){ console->toggleShowSearchBar(); });
     add_shortcut(console, QKeySequence("Meta+F"),
                  [=](){ console->toggleShowSearchBar(); });
-    add_shortcut(console, QKeySequence(Qt::CTRL, Qt::Key_Minus),
+    add_shortcut(console, QKeySequence(Qt::META, Qt::Key_Minus),
                  [=](){ console->zoomOut(); });
-    add_shortcut(console, QKeySequence(Qt::CTRL, Qt::Key_Plus),
+    add_shortcut(console, QKeySequence(Qt::META, Qt::Key_Plus),
                  [=](){ console->zoomIn(); });
-#endif
     add_shortcut(console, QKeySequence("Meta+n"),
                  [=](){ new_console(app); });
 
