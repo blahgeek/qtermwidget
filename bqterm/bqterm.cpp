@@ -19,11 +19,11 @@
 
 #include "qtermwidget.h"
 
-#if __APPLE__
+#ifdef __APPLE__
 extern "C" void macos_hide_titlebar(long winid);
 #endif
 
-#if __APPLE__
+#ifdef __APPLE__
 const QFont DEFAULT_FONT = QFont("Fira Mono", 14);
 #else
 const QFont DEFAULT_FONT = QFont("Fira Mono", 10);
@@ -64,7 +64,7 @@ void new_console(QApplication *app) {
     console->setBidiEnabled(false);
     console->startShellProgram();
 
-#if __APPLE__
+#ifdef __APPLE__
     macos_hide_titlebar(console->winId());
     console->setScrollBarPosition(QTermWidget::ScrollBarPosition::ScrollBarRight);
 #endif
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     setenv("TERM", "xterm-256color", 1);
     setenv("LANG", "en_US.UTF-8", 1);
 
-#if __APPLE__
+#ifdef __APPLE__
     BQStyle *style = new BQStyle;
     style->setBaseStyle(app.style());
     app.setStyle(style);

@@ -69,7 +69,7 @@ using namespace Konsole;
 #define loc(X,Y) ((Y)*_columns+(X))
 #endif
 
-#if __APPLE__
+#ifdef __APPLE__
 #define FORCE_FIXED_FONT 1
 #else
 #define FORCE_FIXED_FONT 0
