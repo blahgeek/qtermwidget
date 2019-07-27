@@ -81,9 +81,15 @@ void new_console(QApplication *app) {
 #else
     add_shortcut(console, QKeySequence("Ctrl+Shift+C"),
                  [=](){ console->copyClipboard(); });
+    add_shortcut(console, QKeySequence("Meta+C"),
+                 [=](){ console->copyClipboard(); });
     add_shortcut(console, QKeySequence("Ctrl+Shift+V"),
                  [=](){ console->pasteClipboard(); });
+    add_shortcut(console, QKeySequence("Meta+V"),
+                 [=](){ console->pasteClipboard(); });
     add_shortcut(console, QKeySequence("Ctrl+Shift+F"),
+                 [=](){ console->toggleShowSearchBar(); });
+    add_shortcut(console, QKeySequence("Meta+F"),
                  [=](){ console->toggleShowSearchBar(); });
     add_shortcut(console, QKeySequence(Qt::CTRL, Qt::Key_Minus),
                  [=](){ console->zoomOut(); });
