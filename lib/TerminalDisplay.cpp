@@ -69,11 +69,8 @@ using namespace Konsole;
 #define loc(X,Y) ((Y)*_columns+(X))
 #endif
 
-#ifdef __APPLE__
+// TODO
 #define FORCE_FIXED_FONT 1
-#else
-#define FORCE_FIXED_FONT 0
-#endif
 
 #define yMouseScroll 1
 
