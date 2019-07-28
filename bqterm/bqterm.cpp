@@ -16,7 +16,6 @@
 #include <QUdpSocket>
 #include <QNetworkDatagram>
 
-#include <atomic>
 #include <functional>
 
 #include "qtermwidget.h"
@@ -68,7 +67,8 @@ int add_udp_server(QObject *parent, int port,
     return sock->localPort();
 }
 
-static std::atomic<int> _console_cnt;
+static int _console_cnt;
+static QTermWidget *_console_active = nullptr;
 
 void new_console(QApplication *app) {
     QTermWidget *console = new QTermWidget(0);  // startnow = 0
@@ -80,7 +80,10 @@ void new_console(QApplication *app) {
     console->setMotionAfterPasting(2);  // scroll to end
     console->setTerminalFont(DEFAULT_FONT);
     console->setBidiEnabled(false);
-    console->setWorkingDirectory("$HOME");
+    if (_console_active)
+        console->setWorkingDirectory(_console_active->workingDirectory());
+    else
+        console->setWorkingDirectory("$HOME");
 
 #ifdef __APPLE__
     macos_hide_titlebar(console->winId());
@@ -113,9 +116,14 @@ void new_console(QApplication *app) {
     QObject::connect(console, &QTermWidget::finished, [=](){
         console->close();
         console->deleteLater();
-        if (_console_cnt.fetch_sub(1) == 1)
+        if (--_console_cnt == 0)
             app->quit();
     });
+    QObject::connect(console, &QTermWidget::termGetFocus, [=](){
+        _console_active = console;
+    });
+    if (!_console_active)
+        _console_active = console;
 
     int control_port = add_udp_server(console, 0, [=](QString const & data) {
         auto match = FONT_CHANGE_REGEX.match(data);
