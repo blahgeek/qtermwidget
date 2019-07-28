@@ -80,6 +80,7 @@ void new_console(QApplication *app) {
     console->setMotionAfterPasting(2);  // scroll to end
     console->setTerminalFont(DEFAULT_FONT);
     console->setBidiEnabled(false);
+    console->setWorkingDirectory("$HOME");
 
 #ifdef __APPLE__
     macos_hide_titlebar(console->winId());
