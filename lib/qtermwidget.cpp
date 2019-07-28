@@ -33,6 +33,10 @@
 #include "SearchBar.h"
 #include "qtermwidget.h"
 
+#ifdef Q_OS_MACOS
+#include <libproc.h>
+#endif
+
 
 #define STEP_ZOOM 1
 
@@ -392,6 +396,23 @@ QString QTermWidget::workingDirectory()
     QDir d(QString::fromLatin1("/proc/%1/cwd").arg(getShellPID()));
     if (!d.exists())
     {
+        qDebug() << "Cannot find" << d.dirName();
+        goto fallback;
+    }
+    return d.canonicalPath();
+#endif
+
+#ifdef Q_OS_MACOS
+    struct proc_vnodepathinfo vpi;
+    memset(&vpi, 0, sizeof(vpi));
+    int ret = proc_pidinfo(getShellPID(), PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+    QDir d;
+    if (ret <= 0) {
+        qDebug() << "Failed to call proc_pidinfo on" << getShellPID();
+        goto fallback;
+    }
+    d = QDir(QString::fromUtf8(vpi.pvi_cdir.vip_path));
+    if (!d.exists()) {
         qDebug() << "Cannot find" << d.dirName();
         goto fallback;
     }
