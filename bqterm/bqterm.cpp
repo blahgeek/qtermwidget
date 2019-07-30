@@ -90,6 +90,13 @@ void new_console(QApplication *app) {
     console->setScrollBarPosition(QTermWidget::ScrollBarPosition::ScrollBarRight);
 #endif
 
+    auto close_console = [=](){
+        console->close();
+        console->deleteLater();
+        if (--_console_cnt == 0)
+            app->quit();
+    };
+
     add_shortcut(console, QKeySequence("Ctrl+Shift+C"),
                  [=](){ console->copyClipboard(); });
     add_shortcut(console, QKeySequence("Meta+C"),
@@ -108,17 +115,13 @@ void new_console(QApplication *app) {
                  [=](){ console->zoomIn(); });
     add_shortcut(console, QKeySequence("Meta+n"),
                  [=](){ new_console(app); });
+    add_shortcut(console, QKeySequence("Meta+w"), close_console);
 
     QObject::connect(console, &QTermWidget::urlActivated, [](const QUrl& url, bool) {
         if (QApplication::keyboardModifiers() & (Qt::ControlModifier | Qt::MetaModifier))
             QDesktopServices::openUrl(url);
     });
-    QObject::connect(console, &QTermWidget::finished, [=](){
-        console->close();
-        console->deleteLater();
-        if (--_console_cnt == 0)
-            app->quit();
-    });
+    QObject::connect(console, &QTermWidget::finished, close_console);
     QObject::connect(console, &QTermWidget::termGetFocus, [=](){
         _console_active = console;
     });
