@@ -251,6 +251,7 @@ void Emulation::receiveData(const char* text, int length)
     for (size_t i=0;i<unicodeText.length();i++)
         receiveChar(unicodeText[i]);
 
+#if 0
     //look for z-modem indicator
     //-- someone who understands more about z-modems that I do may be able to move
     //this check into the above for loop?
@@ -262,6 +263,7 @@ void Emulation::receiveData(const char* text, int length)
                 emit zmodemDetected();
         }
     }
+#endif
 }
 
 //OLDER VERSION
