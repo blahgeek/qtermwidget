@@ -133,6 +133,10 @@ void new_console(QApplication *app) {
         if (match.hasMatch()) {
             QFont new_font = DEFAULT_FONT;
             new_font.setFamily(match.captured(1));
+            bool size_valid = false;
+            int size = match.captured(2).toInt(&size_valid);
+            if (size_valid)
+                new_font.setPointSize(size);
             qDebug() << "Setting font to " << new_font;
             console->setTerminalFont(new_font);
         }
