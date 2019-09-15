@@ -13,9 +13,9 @@ if (APPLE)
     target_link_libraries(bqterm "-framework Cocoa")
 else ()
     add_executable(bqterm ./bqterm.cpp)
+    install(TARGETS bqterm
+        RUNTIME DESTINATION bin)
 endif ()
 
 target_link_libraries(bqterm ${QTERMWIDGET_LIBRARY_NAME} Qt5::Network)
 
-# install(TARGETS bqterm
-#     RUNTIME DESTINATION bin)
